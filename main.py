@@ -7,6 +7,10 @@ import pygame as pg
 import random
 from settings import *
 from sprites import *
+from pygame import midi
+
+pg.init()
+midi.init()
 
 class Game:
     def __init__(self):
@@ -18,6 +22,11 @@ class Game:
         self.clock = pg.time.Clock()
         self.running = True
 
+        try:
+            self.midi_input = midi.Input(1)
+            
+        except:
+            print('no piano')
         self.player_spritesheet = Spritesheet('player.png')
 
     def new(self):
@@ -28,9 +37,9 @@ class Game:
         self.player = Player(self)
         self.all_sprites.add(self.player)
 
-        for i in range(2):
+        for i in range(1):
             Mob(self)
-            Mob(self)
+            #Mob(self)
 
         self.has_shot = False
         self.run()
@@ -48,10 +57,10 @@ class Game:
         # Game Loop - Update
         self.all_sprites.update()
 
-        if len(self.mobs) < 8:
+        if len(self.mobs) < 1:
             random_x = random.randrange(WIDTH, 2  * WIDTH)
             Mob(self, random_x)
-            Mob(self, random_x)
+            #Mob(self, random_x)
 
     def events(self):
         # Game Loop - events
@@ -65,13 +74,21 @@ class Game:
             
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    print('yes')
+                    
                     self.has_shot = True
-
+        
+    def draw_pentagram(self):
+        for y in range(HEIGHT // 3, 2 * HEIGHT // 3, int(1 / 15 * HEIGHT)):
+            
+            pg.draw.line(self.screen, WHITE, (0, y), (WIDTH, y))
     def draw(self):
         # Game Loop - draw
         self.screen.fill(BLACK)
+
+        self.draw_pentagram()
+
         self.all_sprites.draw(self.screen)
+
         # *after* drawing everything, flip the display
         pg.display.flip()
 

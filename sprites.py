@@ -1,6 +1,10 @@
 import pygame as pg
 from settings import *
 import random
+from midipatternspkg import patterns
+from pygame import midi 
+
+
 vec = pg.math.Vector2
 
 
@@ -34,6 +38,7 @@ class Player(pg.sprite.Sprite):
         self.image = self.game.player_spritesheet.get_image(0, 0, 64, 64)
         self.rect = self.image.get_rect()
         self.image = pg.transform.scale(self.image, (self.rect.width * 2, self.rect.height * 2))
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
 
 
@@ -41,6 +46,12 @@ class Player(pg.sprite.Sprite):
 
         self.vy = 7
         self.vx = 7
+
+        pattern_player_mov = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64]
+        pattern_bullet = [note + 12 * 2 for note in pattern_player_mov]
+        self.pattern_player_mov = patterns.PatternChecker2(pattern_player_mov)
+        self.pattern_bullet = patterns.PatternChecker2(pattern_bullet)
+
 
         
     
@@ -53,10 +64,23 @@ class Player(pg.sprite.Sprite):
             self.pos.y += self.vy
             
     def if_hit(self):
-        self.kill()        
+        self.kill()  
+        self.game.running = False
+              
 
     def update(self):
-        self.get_pressed_keys()        
+        self.get_pressed_keys()  
+        if self.game.midi_input.poll():
+            midi_events = self.game.midi_input.read(1)
+            midi2events = midi.midis2events(midi_events, 1)
+            idx = self.pattern_player_mov.check_pattern(midi2events, type='one-note')      
+            idx_bullet = self.pattern_bullet.check_pattern(midi2events, type='one-note')
+            
+            if isinstance(idx, int):
+                self.pos.y = idx * TILESIZE
+            
+            if isinstance(idx_bullet, int):
+                Bullet(self.game, self.pos.x, idx_bullet * TILESIZE)
 
         self.rect.center = self.pos
 
@@ -107,20 +131,20 @@ class Mob(pg.sprite.Sprite):
 
         pg.sprite.Sprite.__init__(self, self.groups)
 
-        self.image = pg.Surface((TILESIZE, TILESIZE))
+        self.image = pg.Surface((TILESIZE // 3, TILESIZE // 3))
 
         self.image.fill(BLUE)
 
         self.rect = self.image.get_rect()
 
         if x is None:
-            x = random.randrange(WIDTH, 2 * WIDTH)
+            x = random.randrange(WIDTH, WIDTH + TILESIZE)
         
-        self.pos = vec(x, random.randrange(0, HEIGHT - TILESIZE // 2))
+        self.pos = vec(x, random.randrange(0, HEIGHT - TILESIZE // 2, TILESIZE))
 
         self.rect.topleft = self.pos
 
-        self.vx = 8
+        self.vx = 1
     
     def update(self):
         self.pos.x -= self.vx
