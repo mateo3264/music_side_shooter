@@ -22,6 +22,10 @@ class Game:
         self.clock = pg.time.Clock()
         self.running = True
 
+        self.n_lifes = 3
+
+        
+
         try:
             self.midi_input = midi.Input(1)
             
@@ -37,8 +41,14 @@ class Game:
         self.player = Player(self)
         self.all_sprites.add(self.player)
 
+        self.mob_velx = 5
+
+        self.n_mobs_dodged = 0
+
+        self.try_augment_mob_velx = False
+        
         for i in range(1):
-            Mob(self)
+            Mob(self, velx=self.mob_velx)
             #Mob(self)
 
         self.has_shot = False
@@ -59,8 +69,19 @@ class Game:
 
         if len(self.mobs) < 1:
             random_x = random.randrange(WIDTH, 2  * WIDTH)
-            Mob(self, random_x)
+            Mob(self, random_x, velx=self.mob_velx)
+            
             #Mob(self, random_x)
+        
+        # TODO: improve the gradual difficulty mechanism
+        # if self.n_mobs_dodged % 3 == 0 and self.n_mobs_dodged != 0:
+        #     self.try_augment_mob_velx = True
+        #     if self.try_augment_mob_velx:
+        #         if random.randrange(100) / 100 > .75:
+        #             self.mob_velx += 1
+        #         self.try_augment_mob_velx = False
+
+            
 
     def events(self):
         # Game Loop - events

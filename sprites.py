@@ -47,8 +47,13 @@ class Player(pg.sprite.Sprite):
         self.vy = 7
         self.vx = 7
 
-        pattern_player_mov = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64]
-        pattern_bullet = [note + 12 * 2 for note in pattern_player_mov]
+        self.n_bullets = 10
+
+        
+
+        pattern_player_mov = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 79]
+        pattern_player_mov = [note + 6 * 2 for note in pattern_player_mov]
+        pattern_bullet = [note + 0 * 2 for note in pattern_player_mov]
         self.pattern_player_mov = patterns.PatternChecker2(pattern_player_mov)
         self.pattern_bullet = patterns.PatternChecker2(pattern_bullet)
 
@@ -64,9 +69,14 @@ class Player(pg.sprite.Sprite):
             self.pos.y += self.vy
             
     def if_hit(self):
-        self.kill()  
-        self.game.running = False
-              
+         
+        self.game.n_lifes -= 1
+        self.game.playing = False
+        print('self.n_lifes')
+        print(self.game.n_lifes)
+        if self.game.n_lifes == 0:
+            self.game.running = False
+        self.kill()       
 
     def update(self):
         self.get_pressed_keys()  
@@ -77,10 +87,14 @@ class Player(pg.sprite.Sprite):
             idx_bullet = self.pattern_bullet.check_pattern(midi2events, type='one-note')
             
             if isinstance(idx, int):
-                self.pos.y = idx * TILESIZE
+                print(idx)
+                self.pos.y = 2 * HEIGHT // 3  - int(idx / 30 * HEIGHT)
+                print(self.pos.y)
             
             if isinstance(idx_bullet, int):
-                Bullet(self.game, self.pos.x, idx_bullet * TILESIZE)
+                if self.n_bullets > 0:
+                    Bullet(self.game, self.pos.x, 2 * HEIGHT // 3  - int(idx_bullet / 30 * HEIGHT))
+                    self.n_bullets -= 1
 
         self.rect.center = self.pos
 
@@ -110,7 +124,7 @@ class Bullet(pg.sprite.Sprite):
         self.rect.center = self.pos
     
     def if_hits(self):
-
+        self.game.n_mobs_dodged += 1
         self.kill()
 
     def update(self):
@@ -126,31 +140,39 @@ class Bullet(pg.sprite.Sprite):
 
 
 class Mob(pg.sprite.Sprite):
-    def __init__(self, game, x=None):
+    def __init__(self, game, x=None, velx=1):
         self.groups = game.all_sprites, game.mobs
 
         pg.sprite.Sprite.__init__(self, self.groups)
 
-        self.image = pg.Surface((TILESIZE // 3, TILESIZE // 3))
+        self.game = game
+
+        side = TILESIZE // 3
+        self.image = pg.Surface((side, side))
 
         self.image.fill(BLUE)
 
         self.rect = self.image.get_rect()
-
-        if x is None:
-            x = random.randrange(WIDTH, WIDTH + TILESIZE)
+        self.y_positions = [2 * HEIGHT // 3  - int(note / 30 * HEIGHT) for note in range(12)]
+        print('self.y_positions')
+        print(self.y_positions)
+        self.n_possible_pos = 2
         
-        self.pos = vec(x, random.randrange(0, HEIGHT - TILESIZE // 2, TILESIZE))
+        if x is None:
+            x = random.randrange(WIDTH, WIDTH + side // 3)
+        
+        self.pos = vec(x, random.choice(self.y_positions))
 
-        self.rect.topleft = self.pos
+        self.rect.center = self.pos
 
-        self.vx = 1
+        self.vx = velx
     
     def update(self):
         self.pos.x -= self.vx
-        self.rect.topleft = self.pos
+        self.rect.center = self.pos
 
         if self.rect.right < 0:
+            self.game.n_mobs_dodged += 1
             self.kill()
             
 
