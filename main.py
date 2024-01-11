@@ -48,7 +48,7 @@ class Game:
         self.change_mobs_vel = False
         self.change_mobs_vel_criteria = 3
 
-        
+        self.draw_debug = False
         
         for i in range(1):
             Mob(self, velx=self.mob_velx)
@@ -97,6 +97,12 @@ class Game:
                 if event.key == pg.K_SPACE:
                     
                     self.has_shot = True
+            
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_h:
+                    
+                    self.draw_debug = not self.draw_debug
+            
         
     def draw_pentagram(self):
         for y in range(HEIGHT // 3, 2 * HEIGHT // 3, int(1 / 15 * HEIGHT)):
@@ -108,8 +114,13 @@ class Game:
 
         self.draw_pentagram()
 
-        self.all_sprites.draw(self.screen)
-
+        #self.all_sprites.draw(self.screen)
+        for sprite in self.all_sprites:
+            self.screen.blit(sprite.image, sprite.rect)
+            if self.draw_debug:
+                
+                pg.draw.rect(self.screen, RED, sprite.hit_rect, 1)
+            
         # *after* drawing everything, flip the display
         pg.display.flip()
 

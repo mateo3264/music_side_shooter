@@ -8,6 +8,9 @@ from pygame import midi
 vec = pg.math.Vector2
 
 
+def collide_hit_rect(one, two):
+    return one.hit_rect.colliderect(two.rect)
+
 class Spritesheet:
     def __init__(self, filename):
         self.spritesheet = pg.image.load(filename).convert()
@@ -19,7 +22,7 @@ class Spritesheet:
         return image
 
 def hit(element, group, func):
-    hits = pg.sprite.spritecollide(element, group, True)
+    hits = pg.sprite.spritecollide(element, group, True, collide_hit_rect)
 
     if hits:
         func()
@@ -40,6 +43,11 @@ class Player(pg.sprite.Sprite):
         self.image = pg.transform.scale(self.image, (self.rect.width * 2, self.rect.height * 2))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
+
+        self.hit_rect = self.rect.copy()
+        
+        self.hit_rect.width -= 10
+        self.hit_rect.height =  int(.1 * self.hit_rect.height)
 
 
         self.rect.topleft = self.pos
@@ -97,6 +105,11 @@ class Player(pg.sprite.Sprite):
                     self.n_bullets -= 1
 
         self.rect.center = self.pos
+        self.hit_rect = self.rect.copy()
+        
+        self.hit_rect.width -= 10
+        self.hit_rect.height = int(.1 * self.hit_rect.height)
+        self.hit_rect.y += self.rect.height // 2 - self.hit_rect.height // 2
 
         if self.game.has_shot:
             self.game.has_shot = False
@@ -122,6 +135,7 @@ class Bullet(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         self.rect.center = self.pos
+        self.hit_rect = self.rect.copy()
     
     def if_hits(self):
         self.game.n_mobs_dodged += 1
@@ -131,6 +145,8 @@ class Bullet(pg.sprite.Sprite):
         self.pos.x += 20
 
         self.rect.center = self.pos
+
+        self.hit_rect = self.rect.copy()
 
         if self.rect.left > WIDTH:
             self.kill()
@@ -153,6 +169,9 @@ class Mob(pg.sprite.Sprite):
         self.image.fill(BLUE)
 
         self.rect = self.image.get_rect()
+        self.hit_rect = self.rect.copy()
+        
+
         self.y_positions = [2 * HEIGHT // 3  - int(note / 30 * HEIGHT) for note in range(12)]
         print('self.y_positions')
         print(self.y_positions)
@@ -170,6 +189,9 @@ class Mob(pg.sprite.Sprite):
     def update(self):
         self.pos.x -= self.vx
         self.rect.center = self.pos
+
+        self.hit_rect = self.rect.copy()
+        
 
         if self.rect.right < 0:
             self.game.n_mobs_dodged += 1
