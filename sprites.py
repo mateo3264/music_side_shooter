@@ -164,9 +164,9 @@ class Mob(pg.sprite.Sprite):
         self.game = game
 
         side = TILESIZE // 3
-        self.image = pg.Surface((side, side))
-
-        self.image.fill(BLUE)
+        self.orig_image = pg.image.load('meteorBrown_tiny1.png').convert()#pg.Surface((side, side))
+        self.image = self.orig_image.copy()
+        #self.image.fill(BLUE)
 
         self.rect = self.image.get_rect()
         self.hit_rect = self.rect.copy()
@@ -185,8 +185,12 @@ class Mob(pg.sprite.Sprite):
         self.rect.center = self.pos
 
         self.vx = velx
+        self.rot_angle = 0
     
     def update(self):
+        self.rot_angle += 10
+        self.image = pg.transform.rotate(self.orig_image, self.rot_angle)
+        self.rect = self.image.get_rect()
         self.pos.x -= self.vx
         self.rect.center = self.pos
 
