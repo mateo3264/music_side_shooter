@@ -15,9 +15,17 @@ vec = pg.math.Vector2
 def collide_hit_rect(one, two):
     return one.hit_rect.colliderect(two.rect)
 
-def get_time_before_mob_dissapears(mob, reason):
+
+def compute_avg(game, mob_note_idx, latency):
+    print('mob_note_idx: ', mob_note_idx)
+    avg_latency = game.latency_avgs[mob_note_idx]
+    avg_latency = avg_latency + .1 * (latency - avg_latency)
+    game.latency_avgs[mob_note_idx] = round(avg_latency, 1)
+
+def get_time_before_mob_dissapears(game, mob, reason):
     cur_time = time.time()
     latency = round(cur_time - mob.time_when_appears, 1)
+    compute_avg(game, mob.note_idx, latency)
     with open('latency_performance.csv', 'a') as f:
         w = csv.writer(f)
         w.writerow([str(datetime.datetime.now()), mob.note, latency, reason])
@@ -96,7 +104,7 @@ class Player(pg.sprite.Sprite):
         print(self.game.n_lifes)
         if self.game.n_lifes == 0:
             self.game.running = False
-        get_time_before_mob_dissapears(mob, 'mob collisioned with player')
+        get_time_before_mob_dissapears(self.game, mob, 'mob collisioned with player')
         self.kill()       
 
     def update(self):
@@ -155,7 +163,7 @@ class Bullet(pg.sprite.Sprite):
         self.game.n_mobs_dodged += 1
         self.game.score += 1
         
-        get_time_before_mob_dissapears(mob, 'mob collisioned with bullet')
+        get_time_before_mob_dissapears(self.game, mob, 'mob collisioned with bullet')
 
         self.kill()
 
@@ -200,6 +208,7 @@ class Mob(pg.sprite.Sprite):
         if x is None:
             x = random.randrange(WIDTH, WIDTH + side // 3)
         y_pos_idx = random.randrange(len(self.y_positions))
+        self.note_idx = y_pos_idx
         y_pos = self.y_positions[y_pos_idx]
         self.pos = vec(WIDTH, y_pos)
 
@@ -233,7 +242,7 @@ class Mob(pg.sprite.Sprite):
                 self.appear = not self.appear
         if self.rect.right < 0:
             self.game.n_mobs_dodged += 1
-            get_time_before_mob_dissapears(self, "mob posx < 0")
+            get_time_before_mob_dissapears(self.game, self, "mob posx < 0")
             self.kill()
             
 

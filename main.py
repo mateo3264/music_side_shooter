@@ -9,6 +9,7 @@ from settings import *
 from sprites import *
 from pygame import midi
 import time
+import csv
 
 pg.init()
 midi.init()
@@ -68,7 +69,14 @@ class Game:
         self.rhythm_pattern = [2, 1, 1]
         self.rhythm_idx = 0
 
-
+        avg_latency_file = open('avg_latency.csv', 'r')
+        reader = csv.reader(avg_latency_file)
+        #header = next(reader)
+        
+        self.latency_avgs = [*reader][0]
+        self.latency_avgs = [float(avg_latency) for avg_latency in self.latency_avgs]
+        
+        avg_latency_file.close()
         #self.last_time = time.time()
 
     def new(self):
@@ -205,3 +213,7 @@ while g.running:
     g.show_go_screen()
 
 pg.quit()
+
+with open('avg_latency.csv', 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(g.latency_avgs)
