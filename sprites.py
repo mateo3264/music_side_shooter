@@ -5,6 +5,7 @@ from midipatternspkg import patterns
 from pygame import midi 
 import csv
 import datetime
+import time
 
 
 
@@ -13,6 +14,14 @@ vec = pg.math.Vector2
 
 def collide_hit_rect(one, two):
     return one.hit_rect.colliderect(two.rect)
+
+def get_time_before_mob_dissapears(mob, reason):
+    cur_time = time.time()
+    latency = cur_time - mob.time_when_appears
+    with open('latency_performance.csv', 'a') as f:
+        w = csv.writer(f)
+        w.writerow([str(datetime.datetime.now()), mob.note, latency, reason])
+
 
 class Spritesheet:
     def __init__(self, filename):
@@ -87,6 +96,7 @@ class Player(pg.sprite.Sprite):
         print(self.game.n_lifes)
         if self.game.n_lifes == 0:
             self.game.running = False
+        get_time_before_mob_dissapears(mob, 'mob collisioned with player')
         self.kill()       
 
     def update(self):
@@ -144,13 +154,12 @@ class Bullet(pg.sprite.Sprite):
         
         self.game.n_mobs_dodged += 1
         self.game.score += 1
-        self.cur_time = pg.time.get_ticks()
+        
+        get_time_before_mob_dissapears(mob, 'mob collisioned with bullet')
 
-        latency = self.cur_time - mob.time_when_appears
-        with open('latency_performance.csv', 'a') as f:
-            w = csv.writer(f)
-            w.writerow([str(datetime.datetime.now()), mob.note, latency])
         self.kill()
+
+        
 
     def update(self):
         self.pos.x += 20
@@ -220,10 +229,11 @@ class Mob(pg.sprite.Sprite):
         
         if self.rect.left < WIDTH:
             if self.appear:
-                self.time_when_appears = pg.time.get_ticks()
+                self.time_when_appears = time.time()
                 self.appear = not self.appear
         if self.rect.right < 0:
             self.game.n_mobs_dodged += 1
+            get_time_before_mob_dissapears(self, "mob posx < 0")
             self.kill()
             
 
