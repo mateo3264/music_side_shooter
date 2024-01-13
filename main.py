@@ -41,6 +41,18 @@ class Game:
         except:
             print('no piano')
         self.player_spritesheet = Spritesheet('player.png')
+        #self.space_background_spritesheet = Spritesheet('sss.png')
+        self.space_img1 = pg.image.load('background_1.png').convert_alpha()
+        self.space_img1 = pg.transform.scale(self.space_img1, (WIDTH, HEIGHT))
+        self.bg_imgs = [[self.space_img1, 0]]
+        self.bg_imgs.append([self.space_img1, WIDTH])
+        self.space_img1_rect = self.space_img1.get_rect()
+
+        for i in range(2, 5):
+            im = pg.image.load(f'background_{i}.png').convert_alpha()
+            im = pg.transform.scale(im, (WIDTH, HEIGHT))
+            self.bg_imgs.append([im, 0])
+            self.bg_imgs.append([im, WIDTH])
 
     def new(self):
         # start a new game
@@ -119,12 +131,29 @@ class Game:
         for y in range(HEIGHT // 3, 2 * HEIGHT // 3, int(1 / 15 * HEIGHT)):
             
             pg.draw.line(self.screen, WHITE, (0, y), (WIDTH, y))
+    
+    def draw_background(self):
+        speed = 1
+        for i, el in enumerate(self.bg_imgs):
+            
+            if i % 2 == 0:
+                speed -= .2
+            el[1] -= speed
+            if el[1] <= -WIDTH:
+                el[1] = WIDTH
+            self.screen.blit(el[0], (el[1], 0))
     def draw(self):
         # Game Loop - draw
         self.screen.fill(BLACK)
 
         self.draw_pentagram()
 
+        self.draw_background()
+
+        bg = pg.Surface((WIDTH, HEIGHT))
+        bg.set_alpha(180)
+        bg.fill(BLACK)
+        self.screen.blit(bg, (0, 0))
         #self.all_sprites.draw(self.screen)
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, sprite.rect)
@@ -133,6 +162,8 @@ class Game:
                 pg.draw.rect(self.screen, RED, sprite.hit_rect, 1)
             
         draw_text(self.screen, 'score: ' + str(self.score), 30, WIDTH - 50, 50)
+
+        
 
         pg.display.flip()
 
