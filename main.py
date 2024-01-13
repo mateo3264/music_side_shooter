@@ -8,6 +8,7 @@ import random
 from settings import *
 from sprites import *
 from pygame import midi
+import time
 
 pg.init()
 midi.init()
@@ -40,6 +41,15 @@ class Game:
             
         except:
             print('no piano')
+
+        self.with_music = False
+
+        if self.with_music:
+            try:
+                self.midi_out = midi.Output(0)
+            except:
+                print('no midi output')
+
         self.player_spritesheet = Spritesheet('player.png')
         #self.space_background_spritesheet = Spritesheet('sss.png')
         self.space_img1 = pg.image.load('background_1.png').convert_alpha()
@@ -53,6 +63,13 @@ class Game:
             im = pg.transform.scale(im, (WIDTH, HEIGHT))
             self.bg_imgs.append([im, 0])
             self.bg_imgs.append([im, WIDTH])
+
+
+        self.rhythm_pattern = [2, 1, 1]
+        self.rhythm_idx = 0
+
+
+        #self.last_time = time.time()
 
     def new(self):
         # start a new game
@@ -83,19 +100,25 @@ class Game:
     def run(self):
         # Game Loop
         self.playing = True
+        self.sum_ms = 0
         while self.playing:
-            self.clock.tick(FPS)
+            self.sum_ms += self.clock.tick(FPS)
             self.events()
             self.update()
             self.draw()
 
     def update(self):
+        
+        
         self.change_mobs_vel = False
         self.all_sprites.update()
-
-        if len(self.mobs) < 1:
+        
+        if self.sum_ms >= 1000 * self.rhythm_pattern[self.rhythm_idx]:
+            self.sum_ms = 0
+            self.rhythm_idx = (self.rhythm_idx + 1) % len(self.rhythm_pattern)#len(self.mobs) < 1:
             random_x = random.randrange(WIDTH, 2  * WIDTH)
             Mob(self, random_x, velx=self.mob_velx)
+            
             
             
         

@@ -192,9 +192,12 @@ class Mob(pg.sprite.Sprite):
             x = random.randrange(WIDTH, WIDTH + side // 3)
         y_pos_idx = random.randrange(len(self.y_positions))
         y_pos = self.y_positions[y_pos_idx]
-        self.pos = vec(x, y_pos)
+        self.pos = vec(WIDTH, y_pos)
 
         self.note = idxs_to_labels[y_pos_idx]
+
+        if self.game.with_music:
+            self.game.midi_out.note_on(NOTES[y_pos_idx], 100)
 
         self.rect.center = self.pos
 
