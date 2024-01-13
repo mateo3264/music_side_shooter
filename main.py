@@ -12,6 +12,15 @@ from pygame import midi
 pg.init()
 midi.init()
 
+
+font_name = pg.font.match_font('arial')
+def draw_text(surf, text, size, x, y):
+    font = pg.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(text_surface, text_rect)
+
 class Game:
     def __init__(self):
         # initialize game window, etc
@@ -40,6 +49,8 @@ class Game:
         self.mobs = pg.sprite.Group()
         self.player = Player(self)
         self.all_sprites.add(self.player)
+
+        self.score = 0
 
         self.mob_velx = 3
 
@@ -121,7 +132,8 @@ class Game:
                 
                 pg.draw.rect(self.screen, RED, sprite.hit_rect, 1)
             
-        # *after* drawing everything, flip the display
+        draw_text(self.screen, 'score: ' + str(self.score), 30, WIDTH - 50, 50)
+
         pg.display.flip()
 
     def show_start_screen(self):

@@ -3,6 +3,9 @@ from settings import *
 import random
 from midipatternspkg import patterns
 from pygame import midi 
+import csv
+import datetime
+
 
 
 vec = pg.math.Vector2
@@ -25,7 +28,7 @@ def hit(element, group, func):
     hits = pg.sprite.spritecollide(element, group, True, collide_hit_rect)
 
     if hits:
-        func()
+        func(hits[0])
 
 class Player(pg.sprite.Sprite):
     def __init__(self, game):
@@ -55,11 +58,11 @@ class Player(pg.sprite.Sprite):
         self.vy = 7
         self.vx = 7
 
-        self.n_bullets = 10
+        self.n_bullets = 100
 
         
 
-        pattern_player_mov = [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 79]
+        pattern_player_mov = NOTES
         pattern_player_mov = [note + 6 * 2 for note in pattern_player_mov]
         pattern_bullet = [note + 0 * 2 for note in pattern_player_mov]
         self.pattern_player_mov = patterns.PatternChecker2(pattern_player_mov)
@@ -76,7 +79,7 @@ class Player(pg.sprite.Sprite):
         if keys[pg.K_DOWN]:
             self.pos.y += self.vy
             
-    def if_hit(self):
+    def if_hit(self, mob):
          
         self.game.n_lifes -= 1
         self.game.playing = False
@@ -137,8 +140,16 @@ class Bullet(pg.sprite.Sprite):
         self.rect.center = self.pos
         self.hit_rect = self.rect.copy()
     
-    def if_hits(self):
+    def if_hits(self, mob):
+        
         self.game.n_mobs_dodged += 1
+        self.game.score += 1
+        self.cur_time = pg.time.get_ticks()
+
+        latency = self.cur_time - mob.time_when_appears
+        with open('latency_performance.csv', 'a') as f:
+            w = csv.writer(f)
+            w.writerow([str(datetime.datetime.now()), mob.note, latency])
         self.kill()
 
     def update(self):
@@ -179,24 +190,35 @@ class Mob(pg.sprite.Sprite):
         
         if x is None:
             x = random.randrange(WIDTH, WIDTH + side // 3)
-        
-        self.pos = vec(x, random.choice(self.y_positions))
+        y_pos_idx = random.randrange(len(self.y_positions))
+        y_pos = self.y_positions[y_pos_idx]
+        self.pos = vec(x, y_pos)
+
+        self.note = idxs_to_labels[y_pos_idx]
 
         self.rect.center = self.pos
 
         self.vx = velx
         self.rot_angle = 0
+
+        self.time_when_appears = None
+
+        self.appear = True
     
     def update(self):
         self.rot_angle += 10
         self.image = pg.transform.rotate(self.orig_image, self.rot_angle)
         self.rect = self.image.get_rect()
         self.pos.x -= self.vx
+
         self.rect.center = self.pos
 
         self.hit_rect = self.rect.copy()
         
-
+        if self.rect.left < WIDTH:
+            if self.appear:
+                self.time_when_appears = pg.time.get_ticks()
+                self.appear = not self.appear
         if self.rect.right < 0:
             self.game.n_mobs_dodged += 1
             self.kill()
