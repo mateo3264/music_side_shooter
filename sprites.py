@@ -17,7 +17,7 @@ def collide_hit_rect(one, two):
 
 def get_time_before_mob_dissapears(mob, reason):
     cur_time = time.time()
-    latency = cur_time - mob.time_when_appears
+    latency = round(cur_time - mob.time_when_appears, 1)
     with open('latency_performance.csv', 'a') as f:
         w = csv.writer(f)
         w.writerow([str(datetime.datetime.now()), mob.note, latency, reason])
