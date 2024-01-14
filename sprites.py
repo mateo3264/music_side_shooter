@@ -169,10 +169,12 @@ class Bullet(pg.sprite.Sprite):
 
         self.image = pg.Surface((8, 8))
         self.image.fill(RED)
+        
 
         self.rect = self.image.get_rect()
 
         self.rect.center = self.pos
+        
         self.hit_rect = self.rect.copy()
     
     def if_hits(self, mob):
@@ -181,15 +183,24 @@ class Bullet(pg.sprite.Sprite):
         self.game.score += 1
         
         get_time_before_mob_dissapears(self.game, mob, 'mob collisioned with bullet')
+        
+        print('target note: ', self.game.target_note[0])
+        print('mob note idx: ', mob.note_idx)
+        if self.game.target_note[0] == mob.note_idx:
+            self.game.target_note[1] += 1
+            if self.game.n_mobs_criteria_for_incrementing_them == self.game.target_note[1]:
+            
+                self.game.add_note_idx()
 
         self.kill()
 
         
 
     def update(self):
-        self.pos.x += 20
+        self.pos.x += 2
 
         self.rect.center = self.pos
+        
 
         self.hit_rect = self.rect.copy()
 
@@ -217,7 +228,7 @@ class Mob(pg.sprite.Sprite):
         self.hit_rect = self.rect.copy()
         
 
-        self.y_positions = [2 * HEIGHT // 3  - int(note / 30 * HEIGHT) for note in range(12)]
+        self.y_positions = [2 * HEIGHT // 3  - int(i / 30 * HEIGHT) for i in range(12)]
         print('self.y_positions')
         print(self.y_positions)
         self.n_possible_pos = 2
@@ -225,9 +236,12 @@ class Mob(pg.sprite.Sprite):
         if x is None:
             x = random.randrange(WIDTH, WIDTH + side // 3)
         ps = compute_probabilities(self.game.latency_avgs)
+        ps = [ps[i] for i in self.game.note_idxs]
+        ps = compute_probabilities(ps)
         print('ps', ps)
-        print('[y for y in range(len(self.y_positions))]', [y for y in range(len(self.y_positions))])
-        y_pos_idx = np.random.choice([y for y in range(len(self.y_positions))], p=ps)#random.randrange(len(self.y_positions))
+        #print('[y for y in range(len(self.y_positions))]', [y for y in range(len(self.y_positions))])
+        print('self.game.note_idxs: ', self.game.note_idxs)
+        y_pos_idx = np.random.choice([y for y in self.game.note_idxs], p=ps)#random.randrange(len(self.y_positions))
         self.note_idx = y_pos_idx
         y_pos = self.y_positions[y_pos_idx]
         self.pos = vec(WIDTH, y_pos)

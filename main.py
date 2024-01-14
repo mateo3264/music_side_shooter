@@ -43,7 +43,7 @@ class Game:
         except:
             print('no piano')
 
-        self.with_music = False
+        self.with_music = True
 
         if self.with_music:
             try:
@@ -67,6 +67,7 @@ class Game:
 
 
         self.rhythm_pattern = [2, 1, 1]
+        self.factor = 1000
         self.rhythm_idx = 0
 
         avg_latency_file = open('avg_latency.csv', 'r')
@@ -77,6 +78,19 @@ class Game:
         self.latency_avgs = [float(avg_latency) for avg_latency in self.latency_avgs]
         
         avg_latency_file.close()
+        self.note_idxs = []
+        self.n_mobs_criteria_for_incrementing_them = 3
+        self.add_note_idx()
+        
+    def add_note_idx(self):
+        if len(self.note_idxs) < 12:
+            possible_idx = random.randrange(12)
+
+            while possible_idx in self.note_idxs:
+                possible_idx = random.randrange(12)
+            
+            self.note_idxs.append(possible_idx)
+            self.target_note = [self.note_idxs[-1], 0]
         #self.last_time = time.time()
 
     def new(self):
@@ -121,7 +135,8 @@ class Game:
         self.change_mobs_vel = False
         self.all_sprites.update()
         
-        if self.sum_ms >= 1000 * self.rhythm_pattern[self.rhythm_idx]:
+        if self.sum_ms >= self.factor * self.rhythm_pattern[self.rhythm_idx]:
+            self.factor -= 1
             self.sum_ms = 0
             self.rhythm_idx = (self.rhythm_idx + 1) % len(self.rhythm_pattern)#len(self.mobs) < 1:
             random_x = random.randrange(WIDTH, 2  * WIDTH)
