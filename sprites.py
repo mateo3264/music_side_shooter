@@ -6,6 +6,7 @@ from pygame import midi
 import csv
 import datetime
 import time
+import numpy as np
 
 
 
@@ -20,7 +21,20 @@ def compute_avg(game, mob_note_idx, latency):
     print('mob_note_idx: ', mob_note_idx)
     avg_latency = game.latency_avgs[mob_note_idx]
     avg_latency = avg_latency + .1 * (latency - avg_latency)
-    game.latency_avgs[mob_note_idx] = round(avg_latency, 1)
+    game.latency_avgs[mob_note_idx] = round(avg_latency, 2)
+
+def add_epsilon_to_every_avg(latency_avgs):
+    latency_avgs = [avg + .1 for avg in latency_avgs]
+    return latency_avgs
+
+def compute_probabilities(latency_avgs):
+    latency_avgs_plus_epsilon = add_epsilon_to_every_avg(latency_avgs)
+    denominator = sum(latency_avgs_plus_epsilon)
+    latency_avgs = [avg / denominator for avg in latency_avgs_plus_epsilon]
+
+    return latency_avgs
+
+
 
 def get_time_before_mob_dissapears(game, mob, reason):
     cur_time = time.time()
@@ -109,21 +123,24 @@ class Player(pg.sprite.Sprite):
 
     def update(self):
         self.get_pressed_keys()  
-        if self.game.midi_input.poll():
-            midi_events = self.game.midi_input.read(1)
-            midi2events = midi.midis2events(midi_events, 1)
-            idx = self.pattern_player_mov.check_pattern(midi2events, type='one-note')      
-            idx_bullet = self.pattern_bullet.check_pattern(midi2events, type='one-note')
-            
-            if isinstance(idx, int):
-                print(idx)
-                self.pos.y = 2 * HEIGHT // 3  - int(idx / 30 * HEIGHT)
-                print(self.pos.y)
-            
-            if isinstance(idx_bullet, int):
-                if self.n_bullets > 0:
-                    Bullet(self.game, self.pos.x, 2 * HEIGHT // 3  - int(idx_bullet / 30 * HEIGHT))
-                    self.n_bullets -= 1
+        try:
+            if self.game.midi_input.poll():
+                midi_events = self.game.midi_input.read(1)
+                midi2events = midi.midis2events(midi_events, 1)
+                idx = self.pattern_player_mov.check_pattern(midi2events, type='one-note')      
+                idx_bullet = self.pattern_bullet.check_pattern(midi2events, type='one-note')
+                
+                if isinstance(idx, int):
+                    print(idx)
+                    self.pos.y = 2 * HEIGHT // 3  - int(idx / 30 * HEIGHT)
+                    print(self.pos.y)
+                
+                if isinstance(idx_bullet, int):
+                    if self.n_bullets > 0:
+                        Bullet(self.game, self.pos.x, 2 * HEIGHT // 3  - int(idx_bullet / 30 * HEIGHT))
+                        self.n_bullets -= 1
+        except:
+            pass
 
         self.rect.center = self.pos
         self.hit_rect = self.rect.copy()
@@ -207,7 +224,10 @@ class Mob(pg.sprite.Sprite):
         
         if x is None:
             x = random.randrange(WIDTH, WIDTH + side // 3)
-        y_pos_idx = random.randrange(len(self.y_positions))
+        ps = compute_probabilities(self.game.latency_avgs)
+        print('ps', ps)
+        print('[y for y in range(len(self.y_positions))]', [y for y in range(len(self.y_positions))])
+        y_pos_idx = np.random.choice([y for y in range(len(self.y_positions))], p=ps)#random.randrange(len(self.y_positions))
         self.note_idx = y_pos_idx
         y_pos = self.y_positions[y_pos_idx]
         self.pos = vec(WIDTH, y_pos)
