@@ -197,7 +197,7 @@ class Bullet(pg.sprite.Sprite):
         
 
     def update(self):
-        self.pos.x += 2
+        self.pos.x += 20
 
         self.rect.center = self.pos
         
