@@ -43,7 +43,7 @@ def get_time_before_mob_dissapears(game, mob, reason):
     with open('latency_performance.csv', 'a') as f:
         w = csv.writer(f)
         w.writerow([str(datetime.datetime.now()), mob.note, latency, reason])
-
+    return latency
 
 class Spritesheet:
     def __init__(self, filename):
@@ -89,7 +89,7 @@ class Player(pg.sprite.Sprite):
         self.vy = 7
         self.vx = 7
 
-        self.n_bullets = 100
+        self.n_bullets = 1000
 
         
 
@@ -168,28 +168,32 @@ class Bullet(pg.sprite.Sprite):
         self.pos = vec(x, y)
 
         self.image = pg.Surface((8, 8))
+
+        
         self.image.fill(RED)
         
 
         self.rect = self.image.get_rect()
-
+        
         self.rect.center = self.pos
+        
         
         self.hit_rect = self.rect.copy()
     
     def if_hits(self, mob):
         
         self.game.n_mobs_dodged += 1
-        self.game.score += 1
         
-        get_time_before_mob_dissapears(self.game, mob, 'mob collisioned with bullet')
+        latency = get_time_before_mob_dissapears(self.game, mob, 'mob collisioned with bullet')
+        
+        self.game.score += 10 // latency
         
         print('target note: ', self.game.target_note[0])
         print('mob note idx: ', mob.note_idx)
         if self.game.target_note[0] == mob.note_idx:
             self.game.target_note[1] += 1
             if self.game.n_mobs_criteria_for_incrementing_them == self.game.target_note[1]:
-            
+                
                 self.game.add_note_idx()
 
         self.kill()
@@ -200,6 +204,7 @@ class Bullet(pg.sprite.Sprite):
         self.pos.x += 20
 
         self.rect.center = self.pos
+        
         
 
         self.hit_rect = self.rect.copy()

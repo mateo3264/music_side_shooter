@@ -66,7 +66,7 @@ class Game:
             self.bg_imgs.append([im, WIDTH])
 
 
-        self.rhythm_pattern = [2, 1, 1]
+        self.rhythm_pattern = [1, 1, .5]
         self.factor = 1000
         self.rhythm_idx = 0
 
@@ -91,6 +91,7 @@ class Game:
             
             self.note_idxs.append(possible_idx)
             self.target_note = [self.note_idxs[-1], 0]
+            self.n_mobs_criteria_for_incrementing_them += 1
         #self.last_time = time.time()
 
     def new(self):
@@ -139,17 +140,23 @@ class Game:
             self.factor -= 1
             self.sum_ms = 0
             self.rhythm_idx = (self.rhythm_idx + 1) % len(self.rhythm_pattern)#len(self.mobs) < 1:
-            random_x = random.randrange(WIDTH, 2  * WIDTH)
-            Mob(self, random_x, velx=self.mob_velx)
+            #random_x = random.randrange(WIDTH, 2  * WIDTH)
+            if np.random.random() < .1:
+                n_mobs = 2
+            else:
+                n_mobs = 1
+            for i in range(n_mobs):
+                Mob(self, WIDTH, velx=self.mob_velx)
             
             
             
         
         # TODO: improve the gradual difficulty mechanism
         if self.change_mobs_vel_criteria == self.n_mobs_dodged:
+            if len(self.note_idxs) >= 12:
             
                 self.mob_velx += 1
-                self.n_mobs_dodged = 0
+            self.n_mobs_dodged = 0
             
 
     def events(self):
